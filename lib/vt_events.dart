@@ -5,7 +5,7 @@ import 'dart:html';
 import 'package:angular/angular.dart';
 
 /// A service used by virtual event listeners and hosts to dispatch events.
-/// 
+///
 /// Users should not need to inject this service.
 @Injectable()
 class VirtualEventService {
@@ -20,7 +20,7 @@ class VirtualEventService {
     tracker.nodes[node] = listener;
 
     if (tracker.count == 1) {
-      tracker.listener  ??= (Event event) {
+      tracker.listener ??= (Event event) {
         Node target = event.target;
         var listener = tracker.nodes[target];
         if (listener != null) {
@@ -50,16 +50,19 @@ class _EventTracker {
 }
 
 /// A base class for virtual event listeners.
-/// 
+///
 /// Override to create a virtual event listener by providing an event type [T], an
 /// `@Output`, and a String for the event name.
-abstract class VirtualEventDirective<T extends Event> implements OnInit, OnDestroy {
+abstract class VirtualEventDirective<T extends Event>
+    implements OnInit, OnDestroy {
   final Element _element;
   final VirtualEventService _service;
   final String _name;
   final _onEvent = new StreamController<T>.broadcast();
 
-  VirtualEventDirective(this._element, this._service, this._name);
+  VirtualEventDirective(this._element, @Optional() this._service, this._name) {
+    assert(_service != null, _missingEventServiceWarning);
+  }
 
   Stream<Event> get onEvent => _onEvent.stream;
 
@@ -86,30 +89,26 @@ final _missingEventServiceWarning = r'''
     </div>
 ''';
 
-
 /// A directive which hosts the native event listeners for virutal events.
-/// 
+///
 /// Place this directive on a component to allow all child components to use
 /// virtual event listeners.
-/// 
+///
 /// __example_use__:
 ///     <div vt-host>
 ///       <div vt-click (click)="handleClick($event)"></div>
 ///     </div>
 @Directive(
-  selector: '[vt-host]',
-  visibility: Visibility.none,
-  providers: const [
-    VirtualEventService,
-  ]
-)
+    selector: '[vt-host]',
+    visibility: Visibility.none,
+    providers: const [
+      VirtualEventService,
+    ])
 class VtHost implements OnInit, OnDestroy {
   final Element _element;
   final VirtualEventService _service;
 
-  VtHost(this._element, @Optional() this._service) {
-    assert(_service != null, _missingEventServiceWarning);
-  }
+  VtHost(this._element, this._service);
 
   @override
   void ngOnInit() {
@@ -125,10 +124,10 @@ class VtHost implements OnInit, OnDestroy {
 }
 
 /// A virtual click directive.
-/// 
+///
 /// Overrides the native `click` output.
 /// __example_use__:
-/// 
+///
 ///     <div vt-click (click)="handleClick($event)"></div>
 @Directive(
   selector: '[vt-click]',
@@ -142,12 +141,11 @@ class VtClick extends VirtualEventDirective<MouseEvent> {
   Stream<MouseEvent> get onEvent => super.onEvent;
 }
 
-
 /// A virtual mouseover directive.
-/// 
+///
 /// Overrides the native `mouseover` output.
 /// __example_use__:
-/// 
+///
 ///     <div vt-mouseover (mouseover)="handleMouse($event)"></div>
 @Directive(
   selector: '[vt-mouseover]',
@@ -162,10 +160,10 @@ class VtMouseover extends VirtualEventDirective<MouseEvent> {
 }
 
 /// A virtual touchstart directive.
-/// 
+///
 /// Overrides the native `touchstart` output.
 /// __example_use__:
-/// 
+///
 ///     <div vt-touchstart (touchstart)="handleTouch($event)"></div>
 @Directive(
   selector: '[vt-touchstart]',
